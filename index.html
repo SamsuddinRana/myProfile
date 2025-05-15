@@ -1,66 +1,226 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
 
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Samsuddin Rana</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introduction to Microsoft Project Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .option-label {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .option-label:hover {
+            background-color: #e5e7eb;
+        }
+        .correct {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .incorrect {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
 </head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+        <h1 class="text-2xl font-bold text-center mb-6">Introduction to Microsoft Project Quiz</h1>
+        <div id="quiz-container"></div>
+        <div id="result" class="mt-6 text-center"></div>
+        <div class="mt-4 flex justify-center space-x-4">
+            <button id="submit-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 hidden">Submit Answers</button>
+            <button id="next-btn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">Next Question</button>
+            <button id="restart-btn" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 hidden">Restart Quiz</button>
+        </div>
+    </div>
 
-<body>
-  <table cellspacing="10">
-    <tr>
-      <td><img src="SamsuddinRana1.png" alt="Samsuddin Rana Profile Picture" width="200" height="200"></td>
-      <td><h1>Samsuddin Rana</h1><p><a href="https://samsuddinrana.com/"><em>Project Management <strong>Professional</strong></em></a></p>
-      <p>
-        Mohammad Samsuddin Rana, a passionate project manager and process improvement specialist, a highly accomplished and renowned Trainer has an extensive work experience of manufacturing and service industries. He carries a wide-ranging of Corporate
-        Work Experience and Corporate Training portfolio. His contribution in enriching people’s experiences is supported by esteemed organizations. What began with a desire to train, is leading to the establishment a brand of “samsuddinrana.com–
-        Corporate Training Consultancy”. His experience cover Project Management, Process Improvement, Credit Risk Management, Financial Audit, Information System Audit, Quality Management, Software Implementation, Customized Tools Development for
-        different industries ranging from manufacturing to service.
-      </P></td>
-    </tr>
-  </table>
-    <hr>
-  <h3>International Certification</h3>
-  <p>
-    He has achieved the Certified Six Sigma Black Belt <a href="https://asq.org/cert/six-sigma-black-belt">(CSSBB)</a> from ASQ (American Society for Quality), USA, the PMI-RMP and PMP Credential from PMI (Project Management Institute), USA, CISA
-    Certification from ISACA (Information Systems Audit and
-    Control Association), USA, PRINCE2(P) Certification from AXELOS, United Kingdom, Sun Certified Java Programmer (SCJP) from Sun Microsystems, USA & Microsoft Certified Professional from Microsoft, USA.
-  </p>
-  <hr>
-  <h3>Foreign Training</h3>
-  <p>
-    He believes in continuous improvement and completed various foreign training including
-  <ul>
-    <li>
-      “Kaizen Management” from Singapore Institute Of Management, Singapore ( SIM )
-    </li>
-    <li>
-      “Personal Growth & Team Building” from Indian Institute of Management (IIMC),
-      Joka, India
-    </li>
-    <li>
-      “Design Thinking for High Business Performance” from XLRI – Xavier School of Management, Jamshedpur, India
-    </li>
-    <li>
-      “UML Design” form Koenig Solutions, New Delhi, India
-    </li>
-  </ul>
-  </p>
-  <hr>
-  <h3>Course Offered</h3>
-  <ol>
-    <li><a href="pmp.html">Project Management Professional</a></li>
-    <li>Certified Six Sigma Black Belt</li>
-    <li>Risk Management Professional</li>
-  </ol>
-  <hr>
-  <h3>Training Details</h3>
-  <ol>
-    <li><a href="trainingDetails.html">Local Training</li></a>
-    <li><a href="trainingDetails.html">Foreign Training</li></a>
-  </ol>
-  <hr>
-  <p><a href="contactMe.html">Contact Details</a></p>
+    <script>
+        const questions = [
+            {
+                question: "What is the primary purpose of Microsoft Project?",
+                options: ["Document editing", "Project management", "Spreadsheet analysis", "Graphic design"],
+                correct: 1
+            },
+            {
+                question: "What does setting a start date in Microsoft Project determine?",
+                options: ["Project color scheme", "Task dependencies", "Project timeline initiation", "Resource allocation"],
+                correct: 2
+            },
+            {
+                question: "Which view in Microsoft Project displays tasks in a timeline format?",
+                options: ["Gantt Chart", "Task Usage", "Resource Sheet", "Calendar"],
+                correct: 0
+            },
+            {
+                question: "What is a 'resource' in Microsoft Project?",
+                options: ["A project milestone", "People, equipment, or materials", "A task deadline", "A budget category"],
+                correct: 1
+            },
+            {
+                question: "What does the critical path in Microsoft Project represent?",
+                options: ["Shortest project duration", "Sequence of tasks determining project duration", "All completed tasks", "Tasks with no resources"],
+                correct: 1
+            },
+            {
+                question: "Which feature in Microsoft Project helps resolve resource overallocation?",
+                options: ["Task Inspector", "Resource Leveling", "Baseline Setting", "Project Calendar"],
+                correct: 1
+            },
+            {
+                question: "What is a baseline in Microsoft Project used for?",
+                options: ["Tracking project progress", "Creating task dependencies", "Assigning resources", "Setting project colors"],
+                correct: 0
+            },
+            {
+                question: "Which Microsoft Project component defines the working hours for a project?",
+                options: ["Task List", "Resource Sheet", "Project Calendar", "Gantt Chart"],
+                correct: 2
+            },
+            {
+                question: "What does the 'Task Mode' in Microsoft Project allow you to control?",
+                options: ["Task priority", "Manual or automatic scheduling", "Task duration", "Resource assignment"],
+                correct: 1
+            },
+            {
+                question: "What is the purpose of a milestone in Microsoft Project?",
+                options: ["Mark a significant project event", "Assign resources", "Set task duration", "Create a report"],
+                correct: 0
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let userAnswers = new Array(questions.length).fill(null);
+
+        const quizContainer = document.getElementById('quiz-container');
+        const resultContainer = document.getElementById('result');
+        const submitBtn = document.getElementById('submit-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            quizContainer.innerHTML = `
+                <h2 class="text-lg font-semibold mb-4">Question ${currentQuestion + 1}: ${q.question}</h2>
+                ${q.options.map((option, index) => `
+                    <label class="option-label block mb-2 p-2 rounded">
+                        <input type="radio" name="answer" value="${index}" class="mr-2" ${userAnswers[currentQuestion] === index ? 'checked' : ''}>
+                        ${option}
+                    </label>
+                `).join('')}
+            `;
+            submitBtn.classList.remove('hidden');
+            nextBtn.classList.add('hidden');
+        }
+
+        function showResult() {
+            const correctAnswers = userAnswers.reduce((acc, answer, index) => answer === questions[index].correct ? acc + 1 : acc, 0);
+            quizContainer.innerHTML = '';
+            resultContainer.innerHTML = `
+                <h2 class="text-xl font-bold">Quiz Completed!</h2>
+                <p>Your score: ${correctAnswers} out of ${questions.length}</p>
+                ${correctAnswers === questions.length ? '<p>Perfect score! Great job!</p>' : '<p>Review the questions to improve your score.</p>'}
+            `;
+            submitBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            restartBtn.classList.remove('hidden');
+        }
+
+        function checkAnswer() {
+            const selected = document.querySelector('input[name="answer"]:checked');
+            if (!selected) {
+                alert('Please select an answer!');
+                return false;
+            }
+            userAnswers[currentQuestion] = parseInt(selected.value);
+            const correct = questions[currentQuestion].correct;
+            const labels = document.querySelectorAll('.option-label');
+            labels.forEach((label, index) => {
+                if (index === correct) {
+                    label.classList.add('correct');
+                } else if (index === parseInt(selected.value)) {
+                    label.classList.add('incorrect');
+                }
+                label.querySelector('input').disabled = true;
+            });
+            submitBtn.classList.add('hidden');
+            nextBtn.classList.remove('hidden');
+            return true;
+        }
+
+        submitBtn.addEventListener('click', () => {
+            if (checkAnswer()) {
+                if (currentQuestion < questions.length - 1) {
+                    nextBtn.classList.remove('hidden');
+                } else {
+                    showResult();
+                }
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        });
+
+        restartBtn.addEventListener('click', () => {
+            currentQuestion = 0;
+            userAnswers.fill(null);
+            resultContainer.innerHTML = '';
+            restartBtn.classList.add('hidden');
+            loadQuestion();
+        });
+
+        // Load the first question
+        loadQuestion();
+    </script>
 </body>
-
 </html>
